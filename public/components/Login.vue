@@ -2,43 +2,30 @@
     <div class="login-warp" v-show="!connectStat">
         <div class="form-warp">
             <h1>MongoDB</h1>
-            <p>Just for export and import</p>
-            <div class="form-group">
-                <label>Address</label>
-                <input
-                    class="form-control"
-                    type="text"
-                    name="address"
-                    v-model="info.address"
-                    v-validate="'required'"
-                    autocomplete="off"
-                >
-            </div>
-            <div class="form-group">
-                <label>Port</label>
-                <input
-                    class="form-control"
-                    type="text"
-                    name="port"
-                    v-model="info.port"
-                    v-validate="'required'"
-                    autocomplete="off"
-                >
-            </div>
-            <div class="form-group">
-                <div
-                    :class="['custom-control custom-switch', {'checked': info.authEnable}]"
-                    @click="toogleCheck"
-                >
+            <p>Just for backup and restore</p>
+            <div v-if="!connectInfo.length || isCreating">
+                <div class="form-group">
+                    <label>Address</label>
                     <input
-                        :class="['custom-control-input']"
-                        type="checkbox"
-                        v-model="info.authEnable"
+                        class="form-control"
+                        type="text"
+                        name="address"
+                        v-model="info.address"
+                        v-validate="'required'"
+                        autocomplete="off"
                     >
-                    <label class="custom-control-label" for="customSwitch1">Perform Authentication</label>
                 </div>
-            </div>
-            <div v-if="info.authEnable">
+                <div class="form-group">
+                    <label>Port</label>
+                    <input
+                        class="form-control"
+                        type="text"
+                        name="port"
+                        v-model="info.port"
+                        v-validate="'required'"
+                        autocomplete="off"
+                    >
+                </div>
                 <div class="form-group">
                     <label>Database</label>
                     <input
@@ -51,35 +38,88 @@
                     >
                 </div>
                 <div class="form-group">
-                    <label>Username</label>
-                    <input
-                        class="form-control"
-                        type="text"
-                        name="uname"
-                        v-model="info.uname"
-                        v-validate="'required'"
-                        autocomplete="off"
+                    <div
+                        :class="['custom-control custom-switch', {'checked': info.dockerEnable}]"
+                        @click="toogleCheck('dockerEnable')"
                     >
+                        <input
+                            :class="['custom-control-input']"
+                            type="checkbox"
+                            v-model="info.dockerEnable"
+                        >
+                        <label class="custom-control-label" for="customSwitch1">Mongo In Docker?</label>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Password</label>
-                    <input
-                        class="form-control"
-                        type="password"
-                        name="password"
-                        v-model="info.password"
-                        v-validate="'required'"
-                        autocomplete="off"
+                    <div
+                        :class="['custom-control custom-switch', {'checked': info.authEnable}]"
+                        @click="toogleCheck('authEnable')"
                     >
+                        <input
+                            :class="['custom-control-input']"
+                            type="checkbox"
+                            v-model="info.authEnable"
+                        >
+                        <label
+                            class="custom-control-label"
+                            for="customSwitch1"
+                        >Perform Authentication</label>
+                    </div>
+                </div>
+                <div v-if="info.authEnable">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input
+                            class="form-control"
+                            type="text"
+                            name="uname"
+                            v-model="info.uname"
+                            v-validate="'required'"
+                            autocomplete="off"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input
+                            class="form-control"
+                            type="password"
+                            name="password"
+                            v-model="info.password"
+                            v-validate="'required'"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+                <div class="error-box">
+                    <p v-for="item in errors.items" :key="item.id">
+                        <span>{{item.msg}}</span>
+                    </p>
+                </div>
+                <div class="form-group fr">
+                    <button class="btn btn-outline-success" @click="connect(info)">Connect</button>
                 </div>
             </div>
-            <div class="error-box">
-                <p v-for="item in errors.items" :key="item.id">
-                    <span>{{item.msg}}</span>
-                </p>
-            </div>
-            <div class="form-group fr">
-                <button class="btn btn-outline-success" @click="connect(info)">Connect</button>
+            <div v-else>
+                <div v-for="(info, index) in connectInfo" :key="index">
+                    <div class="el-row">
+                        <div class="el-col">{{info.address}}</div>
+                        <div class="el-col">{{info.database}} / {{info.uname}}</div>
+                        <div class="el-col">
+                            <button
+                                class="btn btn-sm btn-outline-info"
+                                @click="connect(info, true)"
+                            >ReConnect</button>
+                            <button
+                                class="btn btn-sm btn-outline-danger"
+                                @click="remove(index)"
+                                style="margin-left: 20px;"
+                            >Remove</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group create-warp">
+                    <button class="btn btn-success" @click="isCreating = true">Create New</button>
+                </div>
             </div>
         </div>
     </div>
@@ -91,14 +131,15 @@ import { mapGetters } from 'vuex'
 export default {
     data() {
         return {
+            isCreating: false,
             info: {
                 address: 'localhost',
                 port: '27017',
+                dockerEnable: !!sessionStorage.getItem('dockerEnable'),
                 authEnable: !!sessionStorage.getItem('authEnable'),
-                database: 'ishow',
-                uname: 'elegy7',
-                password: '123465',
-                containerName: 'mongo-server'
+                database: '',
+                uname: '',
+                password: ''
             }
         }
     },
@@ -106,31 +147,36 @@ export default {
         ...mapGetters(['connectInfo', 'connectStat'])
     },
     methods: {
-        async connect(data) {
+        async connect(data, isReConnect) {
             await this.$validator.validateAll()
             if (this.errors.items.length) return
             const result = await axios.post(this.$root.BASEURL + '/connect', {
                 data
             })
-            if (!result.data.ok) {
+            if (result.data.code !== 'ok') {
                 this.$toasted.error(result.data.message)
-                this.$store.dispatch('setConnectInfo', null)
                 return
             }
+            this.info.connected = true
             this.$store.dispatch('setDbs', result.data.databases)
+            if (isReConnect) return
             this.$store.dispatch('setConnectInfo', this.info)
         },
-        toogleCheck() {
-            this.info.authEnable = !this.info.authEnable
+        toogleCheck(field) {
+            if (field === 'dockerEnable') return
+            this.info[field] = !this.info[field]
             sessionStorage.setItem(
                 'authEnable',
                 this.info.authEnable ? 'enable' : ''
             )
-        }
-    },
-    created() {
-        if (this.connectStat) {
-            this.connect(this.connectInfo)
+            sessionStorage.setItem(
+                'dockerEnable',
+                this.info.dockerEnable ? 'enable' : ''
+            )
+        },
+        // 删除一条连接信息
+        remove(index) {
+            this.$store.dispatch('removeConnectInfo', index)
         }
     }
 }
@@ -173,6 +219,30 @@ export default {
             border: 1px solid lighten(rgb(220, 35, 35), 15%);
             border-radius: 3px;
             padding: 5px 15px;
+        }
+    }
+    .el-row {
+        display: flex;
+        border: 0px solid #d9d9d9;
+        padding: 10px;
+        border-radius: 5px;
+        .el-col {
+            display: inline-flex;
+            width: 33%;
+            padding-left: 30px;
+            &:last-child {
+                justify-content: flex-end;
+            }
+        }
+        .btn-sm {
+            padding: 0px 10px;
+        }
+    }
+    .create-warp {
+        padding-top: 50px;
+        text-align: center;
+        .btn {
+            width: 200px;
         }
     }
 }

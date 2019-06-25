@@ -1,1 +1,0 @@
-{"version":3,"sources":["stylesheets/style.css"],"names":[],"mappings":"AAAA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA","file":"style.018fc21b.css","sourceRoot":"..","sourcesContent":["body {\n    padding: 50px;\n    font: 14px 'Lucida Grande', Helvetica, Arial, sans-serif;\n}\n\na {\n    color: #00b7ff;\n}\n.fr {\n    float: right;\n}\n"]}

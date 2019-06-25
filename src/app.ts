@@ -3,6 +3,7 @@ import * as path from 'path'
 import * as logger from 'morgan'
 import * as favicon from 'express-favicon'
 import * as session from 'express-session'
+import * as SessionFileStore from 'session-file-store'
 import 'express-async-errors'
 import errorMiddleware from './middleware/error.middleware'
 import IndexContoller from './controller/index.contoller'
@@ -21,7 +22,15 @@ export class App {
     public listen() {
         this.app.use(logger('dev'))
         this.app.use(express.json())
-        this.app.use(session({ secret: 'meiyoumima' }))
+        this.app.use(
+            session({
+                secret: 'meiyoumima',
+                cookie: {
+                    maxAge: 24 * 60 * 60 * 1000
+                },
+                store: new (SessionFileStore(session))()
+            })
+        )
         this.app.use(express.urlencoded({ extended: false }))
         this.app.use(express.static(path.join(__dirname, '../public/dist')))
         this.app.use(favicon(path.resolve(__dirname, '../public/images/mongo.png')))

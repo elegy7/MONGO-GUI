@@ -3,3 +3,5 @@
 yarn.lock
 public/.cache/
 public/node_modules/
+/public/dist
+/sessions

@@ -3,8 +3,12 @@
         <div class="line-box">
             <div v-for="(item, index) in dbs" :key="index">
                 <span class="badge badge-light db-box">{{item.name}}</span>
-                <div class="btn btn-sm btn-primary" @click="handleExport(item)">Export</div>
                 <div class="btn btn-sm btn-primary" @click="handleImport(item)">Import</div>
+                <div
+                    class="btn btn-sm btn-primary"
+                    @click="handleExport(item)"
+                    v-if="item.sizeOnDisk > 0"
+                >Export</div>
             </div>
         </div>
 
@@ -25,12 +29,20 @@ export default {
         ...mapGetters(['dbs'])
     },
     methods: {
-        disconnect() {
-            this.$store.dispatch('setConnectInfo', null)
+        async disconnect() {
+            await axios.post(this.$root.BASEURL + '/disConnect')
             this.$store.dispatch('setDbs', [])
         },
-        handleImport(item) {
-            axios.post(this.$root.BASEURL + '/import')
+        async handleImport(item) {
+            const result = await axios.post(this.$root.BASEURL + '/import', {
+                data: {
+                    dirpath: 'd:/dump/ishow'
+                }
+            })
+            if (result.data.code === 'session timeout') {
+                this.$store.dispatch('setDbs', [])
+                return
+            }
         },
         handleExport(item) {}
     }

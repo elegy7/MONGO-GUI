@@ -1,8 +1,9 @@
+import axios from 'axios'
 const app = {
     state: {
         dbs: [],
-        connectStat: !!sessionStorage.getItem('connectInfo'),
-        connectInfo: JSON.parse(sessionStorage.getItem('connectInfo'))
+        connectStat: false,
+        connectInfo: JSON.parse(localStorage.getItem('connectInfo') || '[]')
     },
     mutations: {
         SET_DBS: (state, paylaod) => {
@@ -12,21 +13,37 @@ const app = {
             state.connectStat = paylaod
         },
         SET_CONNECTINFO: (state, paylaod) => {
-            state.connectStat = paylaod
             if (paylaod) {
-                sessionStorage.setItem('connectInfo', JSON.stringify(paylaod))
-            } else {
-                sessionStorage.removeItem('connectInfo')
+                state.connectInfo.push(paylaod)
+                localStorage.setItem('connectInfo', JSON.stringify(state.connectInfo))
             }
+        },
+        REMOVE_CONNECTINFO: (state, paylaod) => {
+            state.connectInfo.splice(paylaod, 1)
+            localStorage.setItem('connectInfo', JSON.stringify(state.connectInfo))
         }
     },
     actions: {
+        getDbs({ commit }) {
+            return new Promise(async resolve => {
+                const result = await axios.post('/getDbs')
+                console.log('result', result)
+                if (result.data.code !== 'ok') {
+                    commit('SET_DBS', [])
+                } else {
+                    commit('SET_DBS', result.data.databases)
+                }
+                resolve()
+            })
+        },
         setDbs({ commit }, data) {
             commit('SET_DBS', data)
         },
         setConnectInfo({ commit }, data) {
             commit('SET_CONNECTINFO', data)
-            commit('SET_CONNECTSTAT', data ? 'connected' : '')
+        },
+        removeConnectInfo({ commit }, data) {
+            commit('REMOVE_CONNECTINFO', data)
         }
     }
 }

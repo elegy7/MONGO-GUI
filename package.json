@@ -1,12 +1,12 @@
 {
     "name": "mongo-gui",
     "version": "0.0.0",
-    "main": "index.js",
+    "main": "main.js",
     "license": "MIT",
     "scripts": {
-        "start": "npm run server",
-        "start:watch": "nodemon -e ts -w ./src -x npm run server",
-        "start:debug": "nodemon -e ts -w ./src -x node --inspect-brk -r ts-node/register src/server.ts",
+        "start": "electron .",
+        "server:watch": "nodemon -e ts -w ./src -x npm run server",
+        "server:debug": "nodemon -e ts -w ./src -x node --inspect-brk -r ts-node/register src/server.ts",
         "server": "ts-node src/server.ts",
         "build": "tsc"
     },
@@ -24,6 +24,7 @@
         "apollo-server": "^2.6.1",
         "apollo-server-express": "^2.6.1",
         "dockerode": "^2.5.8",
+        "electron": "^5.0.6",
         "exec-sh": "^0.3.2",
         "express": "~4.16.1",
         "express-async-errors": "^3.1.1",

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { BASEURL } from '../../utils/consts'
 const app = {
     state: {
         dbs: [],
@@ -26,7 +27,7 @@ const app = {
     actions: {
         getDbs({ commit }) {
             return new Promise(async resolve => {
-                const result = await axios.post('/getDbs')
+                const result = await axios.post(BASEURL + '/getDbs')
                 console.log('result', result)
                 if (result.data.code !== 'ok') {
                     commit('SET_DBS', [])

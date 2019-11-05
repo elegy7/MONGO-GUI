@@ -1,124 +1,110 @@
 <template>
-    <div class="login-warp" v-show="!connectStat">
+    <div class="login-warp"
+         v-show="!connectStat">
         <div class="form-warp">
             <h1>MongoDB</h1>
             <p>Just for backup and restore</p>
             <div v-if="!connectInfo.length || isCreating">
                 <div class="form-group">
                     <label>Address</label>
-                    <input
-                        class="form-control"
-                        type="text"
-                        name="address"
-                        v-model="info.address"
-                        v-validate="'required'"
-                        autocomplete="off"
-                    >
+                    <input autocomplete="off"
+                           class="form-control"
+                           name="address"
+                           type="text"
+                           v-model="info.address"
+                           v-validate="'required'">
                 </div>
                 <div class="form-group">
                     <label>Port</label>
-                    <input
-                        class="form-control"
-                        type="text"
-                        name="port"
-                        v-model="info.port"
-                        v-validate="'required'"
-                        autocomplete="off"
-                    >
+                    <input autocomplete="off"
+                           class="form-control"
+                           name="port"
+                           type="text"
+                           v-model="info.port"
+                           v-validate="'required'">
                 </div>
                 <div class="form-group">
                     <label>Database</label>
-                    <input
-                        class="form-control"
-                        type="text"
-                        name="database"
-                        v-model="info.database"
-                        v-validate="'required'"
-                        autocomplete="off"
-                    >
+                    <input autocomplete="off"
+                           class="form-control"
+                           name="database"
+                           type="text"
+                           v-model="info.database"
+                           v-validate="'required'">
                 </div>
                 <div class="form-group">
-                    <div
-                        :class="['custom-control custom-switch', {'checked': info.dockerEnable}]"
-                        @click="toogleCheck('dockerEnable')"
-                    >
-                        <input
-                            :class="['custom-control-input']"
-                            type="checkbox"
-                            v-model="info.dockerEnable"
-                        >
-                        <label class="custom-control-label" for="customSwitch1">Mongo In Docker?</label>
+                    <div :class="['custom-control custom-switch', {'checked': info.dockerEnable}]"
+                         @click="toogleCheck('dockerEnable')">
+                        <input :class="['custom-control-input']"
+                               type="checkbox"
+                               v-model="info.dockerEnable">
+                        <label class="custom-control-label"
+                               for="customSwitch1">Mongo In Docker?</label>
                     </div>
                 </div>
                 <div class="form-group">
-                    <div
-                        :class="['custom-control custom-switch', {'checked': info.authEnable}]"
-                        @click="toogleCheck('authEnable')"
-                    >
-                        <input
-                            :class="['custom-control-input']"
-                            type="checkbox"
-                            v-model="info.authEnable"
-                        >
-                        <label
-                            class="custom-control-label"
-                            for="customSwitch1"
-                        >Perform Authentication</label>
+                    <div :class="['custom-control custom-switch', {'checked': info.authEnable}]"
+                         @click="toogleCheck('authEnable')">
+                        <input :class="['custom-control-input']"
+                               type="checkbox"
+                               v-model="info.authEnable">
+                        <label class="custom-control-label"
+                               for="customSwitch1">Perform Authentication</label>
                     </div>
                 </div>
                 <div v-if="info.authEnable">
                     <div class="form-group">
                         <label>Username</label>
-                        <input
-                            class="form-control"
-                            type="text"
-                            name="uname"
-                            v-model="info.uname"
-                            v-validate="'required'"
-                            autocomplete="off"
-                        >
+                        <input autocomplete="off"
+                               class="form-control"
+                               name="uname"
+                               type="text"
+                               v-model="info.uname"
+                               v-validate="'required'">
                     </div>
                     <div class="form-group">
                         <label>Password</label>
-                        <input
-                            class="form-control"
-                            type="password"
-                            name="password"
-                            v-model="info.password"
-                            v-validate="'required'"
-                            autocomplete="off"
-                        >
+                        <input autocomplete="off"
+                               class="form-control"
+                               name="password"
+                               type="password"
+                               v-model="info.password"
+                               v-validate="'required'">
                     </div>
                 </div>
                 <div class="error-box">
-                    <p v-for="item in errors.items" :key="item.id">
+                    <p :key="item.id"
+                       v-for="item in errors.items">
                         <span>{{item.msg}}</span>
                     </p>
                 </div>
-                <div class="form-group fr">
-                    <button class="btn btn-outline-success" @click="connect(info)">Connect</button>
+                <div class="form-group"
+                     style="width: 100%;">
+                    <a @click="isCreating = false"
+                       class="btn fl"
+                       href="javascript:;">Back</a>
+                    <button @click="connect(info)"
+                            class="btn btn-outline-success fr">Connect</button>
                 </div>
             </div>
             <div v-else>
-                <div v-for="(info, index) in connectInfo" :key="index">
+                <div :key="index"
+                     v-for="(info, index) in connectInfo">
                     <div class="el-row">
                         <div class="el-col">{{info.address}}</div>
                         <div class="el-col">{{info.database}} / {{info.uname}}</div>
                         <div class="el-col">
-                            <button
-                                class="btn btn-sm btn-outline-info"
-                                @click="connect(info, true)"
-                            >ReConnect</button>
-                            <button
-                                class="btn btn-sm btn-outline-danger"
-                                @click="remove(index)"
-                                style="margin-left: 20px;"
-                            >Remove</button>
+                            <button @click="connect(info, true)"
+                                    class="btn btn-sm btn-outline-info">ReConnect</button>
+                            <button @click="remove(index)"
+                                    class="btn btn-sm btn-outline-danger"
+                                    style="margin-left: 20px;">Remove</button>
                         </div>
                     </div>
                 </div>
                 <div class="form-group create-warp">
-                    <button class="btn btn-success" @click="isCreating = true">Create New</button>
+                    <button @click="isCreating = true"
+                            class="btn btn-success">Create New</button>
                 </div>
             </div>
         </div>
@@ -127,6 +113,7 @@
 
 <script>
 import axios from 'axios'
+import { BASEURL } from '../javascripts/utils/consts.js'
 import { mapGetters } from 'vuex'
 export default {
     data() {
@@ -135,7 +122,7 @@ export default {
             info: {
                 address: 'localhost',
                 port: '27017',
-                dockerEnable: !!sessionStorage.getItem('dockerEnable'),
+                dockerEnable: !!sessionStorage.getItem('dockerEnable') || true,
                 authEnable: !!sessionStorage.getItem('authEnable'),
                 database: '',
                 uname: '',
@@ -150,7 +137,7 @@ export default {
         async connect(data, isReConnect) {
             await this.$validator.validateAll()
             if (this.errors.items.length) return
-            const result = await axios.post(this.$root.BASEURL + '/connect', {
+            const result = await axios.post(BASEURL + '/connect', {
                 data
             })
             if (result.data.code !== 'ok') {
@@ -226,10 +213,11 @@ export default {
         border: 0px solid #d9d9d9;
         padding: 10px;
         border-radius: 5px;
+        padding-left: 0;
         .el-col {
             display: inline-flex;
             width: 33%;
-            padding-left: 30px;
+            // padding-left: 30px;
             &:last-child {
                 justify-content: flex-end;
             }

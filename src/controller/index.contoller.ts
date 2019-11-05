@@ -3,7 +3,7 @@ import * as express from 'express'
 import * as Docker from 'dockerode'
 import { promise as execShPromise } from 'exec-sh'
 import { Router } from 'express'
-import { MongoClient } from 'mongodb'
+import { MongoClient, Admin } from 'mongodb'
 export default class IndexContoller implements Controller {
     public router: Router = express.Router()
     public path: string = '/'
@@ -28,6 +28,7 @@ export default class IndexContoller implements Controller {
             res.json({ code: 'ok' })
         })
 
+        // 连接数据库
         this.router.post('/connect', async (req: any, res: express.Response) => {
             const {
                 address,
@@ -41,9 +42,9 @@ export default class IndexContoller implements Controller {
             const connectUrl = authEnable
                 ? `mongodb://${uname}:${password}@${address}:${port}/${database}`
                 : `mongodb://${address}:${port}/${database}`
-            const client = await MongoClient.connect(connectUrl)
+            const client: MongoClient = await MongoClient.connect(connectUrl)
             if (!client) return
-            const admin = client.db(database).admin()
+            const admin: Admin = client.db(database).admin()
             const databases = await admin.listDatabases()
             // 查询用户要连接的库是否存在
             const result = databases.databases.find(item => item.name === database)
@@ -55,7 +56,7 @@ export default class IndexContoller implements Controller {
             )
             client.close()
             if (!databases.databases.length) {
-                res.send({ status: 'err', message: '不允许使用系统库' })
+                res.send({ status: 'err', message: 'default databases are not support' })
                 return
             }
             // 将必要的信息存储到session
@@ -66,8 +67,8 @@ export default class IndexContoller implements Controller {
             req.session.save()
             res.send({ code: 'ok', databases: databases.databases })
         })
-
-        this.router.post('/import', async (req: any, res: express.Response) => {
+        // restore数据库
+        this.router.post('/restore', async (req: any, res: express.Response) => {
             const { connectUrl, dockerEnable, database } = req.session
             const { dirpath } = req.body.data
             req.body.data = req.body.data || {}
@@ -106,7 +107,7 @@ export default class IndexContoller implements Controller {
                 }
                 return
             }
-            res.send({ code: 'ok', msg: '导入成功' })
+            res.json({ code: 'ok', msg: '导入成功' })
         })
     }
 }

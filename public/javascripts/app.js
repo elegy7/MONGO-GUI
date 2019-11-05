@@ -15,11 +15,6 @@ Vue.use(vueToasted, {
 
 new Vue({
     el: '#app',
-    data() {
-        return {
-            BASEURL: 'http://localhost:3000'
-        }
-    },
     store,
     render: h => h(Entry),
     mounted() {}

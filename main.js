@@ -16,14 +16,9 @@ function createWindow() {
         }
     })
 
-    // 加载index.html文件
-    console.log(
-        "path.join('file://', __dirname, './public/dist/index.html')",
-        path.join('file://', __dirname, './public/dist/index.html')
-    )
-    // win.loadURL(path.join('file://', __dirname, './public/dist/index.html'))
+    // win.loadURL(path.join('file://', __dirname, './web/dist/index.html'))
 
-    win.loadFile('./public/dist/index.html')
+    win.loadFile('./web/dist/index.html')
 
     // 打开开发者工具
     win.webContents.openDevTools()

@@ -1,7 +1,6 @@
-/node_modules/
-/build/
+node_modules
 yarn.lock
-public/.cache/
-public/node_modules/
-/public/dist
+.cache
+/build/
+/web/dist
 /sessions

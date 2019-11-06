@@ -112,9 +112,12 @@
 </template>
 
 <script>
-import axios from 'axios'
+import IndexService from '../../src/service/index.service.ts'
 import { BASEURL } from '../javascripts/utils/consts.js'
 import { mapGetters } from 'vuex'
+
+const indexService = new IndexService()
+
 export default {
     data() {
         return {
@@ -137,15 +140,11 @@ export default {
         async connect(data, isReConnect) {
             await this.$validator.validateAll()
             if (this.errors.items.length) return
-            const result = await axios.post(BASEURL + '/connect', {
-                data
-            })
-            if (result.data.code !== 'ok') {
-                this.$toasted.error(result.data.message)
-                return
-            }
+            const result = await indexService.connect(data)
+            console.log('result', result)
+
             this.info.connected = true
-            this.$store.dispatch('setDbs', result.data.databases)
+            this.$store.dispatch('setDbs', result.databases)
             if (isReConnect) return
             this.$store.dispatch('setConnectInfo', this.info)
         },

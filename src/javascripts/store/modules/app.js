@@ -1,5 +1,6 @@
-import axios from 'axios'
-import { BASEURL } from '../../utils/consts'
+import IndexService from '../../../service/index.service'
+
+const indexService = new IndexService()
 const app = {
     state: {
         dbs: [],
@@ -27,13 +28,8 @@ const app = {
     actions: {
         getDbs({ commit }) {
             return new Promise(async resolve => {
-                const result = await axios.post(BASEURL + '/getDbs')
-                console.log('result', result)
-                if (result.data.code !== 'ok') {
-                    commit('SET_DBS', [])
-                } else {
-                    commit('SET_DBS', result.data.databases)
-                }
+                const result = indexService.getDbs()
+                commit('SET_DBS', result)
                 resolve()
             })
         },

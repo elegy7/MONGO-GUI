@@ -4,9 +4,10 @@
             <div :key="index"
                  v-for="(item, index) in dbs">
                 <span class="badge badge-light db-box">{{item.name}}</span>
-                <div class="btn btn-sm btn-primary btn-100">
+                <div class="btn btn-sm btn-primary btn-100"
+                     @click="showFileDialog">
                     <span>Import</span>
-                    <div class="file-input-warp">
+                    <!-- <div class="file-input-warp">
                         <input @change="handleRestore"
                                type="file"
                                name="file"
@@ -14,7 +15,7 @@
                                ref="fileinput"
                                webkitdirectory
                                directory>
-                    </div>
+                    </div> -->
                 </div>
                 <div @click="handleExport(item)"
                      class="btn btn-sm btn-primary"
@@ -33,8 +34,11 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { BASEURL } from '../javascripts/utils/consts.js'
-import axios from 'axios'
+import { remote, ipcRenderer as ipc } from 'electron'
+import IndexService from '../service/index.service'
+
+const indexService = new IndexService()
+
 export default {
     data() {
         return {}
@@ -44,21 +48,34 @@ export default {
     },
     methods: {
         async disconnect() {
-            await axios.post(BASEURL + '/disConnect')
+            indexService.disConnect()
             this.$store.dispatch('setDbs', [])
         },
-        async handleRestore(item) {
-            const result = await axios.post(BASEURL + '/restore', {
-                data: {
-                    dirpath: 'd:/dump/ishow'
-                }
-            })
-            if (result.data.code === 'session timeout') {
-                this.$store.dispatch('setDbs', [])
-                return
+        async handleRestore(dirpath) {
+            const result = await indexService.restoreInDocker(dirpath)
+            if (result) {
+            } else {
+                this.$toasted.show('导入成功')
+                /* remote.dialog.showMessageBox({
+                    type: 'info',
+                    title: '信息',
+                    message: '导入成功'
+                }) */
             }
         },
-        handleExport(item) {}
+        handleExport(item) {},
+        showFileDialog() {
+            const dialog = remote.dialog
+            dialog.showOpenDialog(
+                { properties: ['openDirectory'] },
+                filename => {
+                    if (filename && filename.length === 1) {
+                        this.dictorySelected = filename[0]
+                        this.handleRestore(this.dictorySelected)
+                    }
+                }
+            )
+        }
     }
 }
 </script>

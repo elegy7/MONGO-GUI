@@ -1,6 +1,8 @@
 node_modules
 yarn.lock
+dist
+webdist
 .cache
 /build/
-/web/dist
 /sessions
+/webdist

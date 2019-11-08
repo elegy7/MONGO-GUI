@@ -1,28 +1,29 @@
 import IndexService from '../../../service/index.service'
+import logger from '../../../log/logger'
 
 const indexService = new IndexService()
 const app = {
     state: {
         dbs: [],
         connectStat: false,
-        connectInfo: JSON.parse(localStorage.getItem('connectInfo') || '[]')
+        connectList: JSON.parse(localStorage.getItem('connectList') || '[]')
     },
     mutations: {
-        SET_DBS: (state, paylaod) => {
-            state.dbs = paylaod
+        SET_DBS: (state, data) => {
+            state.dbs = data
         },
-        SET_CONNECTSTAT: (state, paylaod) => {
-            state.connectStat = paylaod
+        SET_CONNECTSTAT: (state, data) => {
+            state.connectStat = data
         },
-        SET_CONNECTINFO: (state, paylaod) => {
-            if (paylaod) {
-                state.connectInfo.push(paylaod)
-                localStorage.setItem('connectInfo', JSON.stringify(state.connectInfo))
+        SET_CONNECTLIST: (state, data) => {
+            if (data) {
+                state.connectList.push(data)
+                localStorage.setItem('connectList', JSON.stringify(state.connectList))
             }
         },
-        REMOVE_CONNECTINFO: (state, paylaod) => {
-            state.connectInfo.splice(paylaod, 1)
-            localStorage.setItem('connectInfo', JSON.stringify(state.connectInfo))
+        REMOVE_FROM_CONNECTLIST: (state, data) => {
+            state.connectList.splice(data, 1)
+            localStorage.setItem('connectList', JSON.stringify(state.connectList))
         }
     },
     actions: {
@@ -33,14 +34,24 @@ const app = {
                 resolve()
             })
         },
-        setDbs({ commit }, data) {
-            commit('SET_DBS', data)
+        setDbs({ commit }, paylaod) {
+            commit('SET_DBS', paylaod)
         },
-        setConnectInfo({ commit }, data) {
-            commit('SET_CONNECTINFO', data)
+        setConnectList({ commit }, paylaod) {
+            commit('SET_CONNECTLIST', paylaod)
         },
-        removeConnectInfo({ commit }, data) {
-            commit('REMOVE_CONNECTINFO', data)
+        removeFromConnectList({ commit }, paylaod) {
+            commit('REMOVE_FROM_CONNECTLIST', paylaod)
+        },
+        setConnectStat({ commit }, paylaod) {
+            commit('SET_CONNECTSTAT', paylaod)
+        },
+        async refreshDb({ commit, state }, paylaod) {
+            // commit('REFRESH_DB', paylaod)
+            const result = await indexService.connect(state.connectStat).catch(err => {
+                logger(err)
+            })
+            commit('SET_DBS', result.databases)
         }
     }
 }

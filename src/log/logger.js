@@ -1,35 +1,17 @@
-/**
- * @param {string} level
- * @param {string} text
- */
-function log(level, text) {
-    var args = Array.prototype.slice.call(arguments, 1)
-    args = args.map(function(arg) {
-        return arg instanceof Error ? arg.stack + EOL : arg
-    })
-    text = util.format.apply(util, args)
+const logger = require('electron-logger')
 
-    var msg = {
-        level: level,
-        text: text,
-        date: new Date()
-    }
+export default function(error) {
+    console.log('error', error)
+    logger.info(error.stack)
 
-    var transports = module.exports.transports
+    logger.setLevel('error')
+    logger.setLevel(1)
 
-    for (var i in transports) {
-        // jshint -W089
-        if (!transports.hasOwnProperty(i) || typeof transports[i] !== 'function') {
-            continue
-        }
-        if (!compareLevels(transports[i].level, level)) {
-            continue
-        }
+    logger.getLevel()
 
-        try {
-            transports[i].call(module.exports, msg)
-        } catch (err) {
-            console.error('Logger Error: ', err)
-        }
-    }
+    logger.close()
+    logger.pause()
+    logger.open()
+
+    logger.setOutput({ file: './error.log' })
 }

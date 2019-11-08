@@ -6,7 +6,7 @@
                 <span class="badge badge-light db-box">{{item.name}}</span>
                 <div class="btn btn-sm btn-primary btn-100"
                      @click="showFileDialog">
-                    <span>Import</span>
+                    <span>Restore</span>
                     <!-- <div class="file-input-warp">
                         <input @change="handleRestore"
                                type="file"
@@ -18,9 +18,14 @@
                     </div> -->
                 </div>
                 <div @click="handleExport(item)"
-                     class="btn btn-sm btn-primary"
+                     class="btn btn-sm btn-success"
                      v-if="item.sizeOnDisk > 0">
-                    <span>Export</span>
+                    <span>Dump</span>
+                </div>
+                <div @click="handleDrop(item)"
+                     class="btn btn-sm btn-danger"
+                     v-if="item.sizeOnDisk > 0">
+                    <span>Drop</span>
                 </div>
             </div>
         </div>
@@ -50,12 +55,14 @@ export default {
         async disconnect() {
             indexService.disConnect()
             this.$store.dispatch('setDbs', [])
+            this.$store.dispatch('setConnectStat', null)
         },
         async handleRestore(dirpath) {
             const result = await indexService.restoreInDocker(dirpath)
             if (result) {
             } else {
                 this.$toasted.show('导入成功')
+                this.$store.dispatch('refreshDb')
                 /* remote.dialog.showMessageBox({
                     type: 'info',
                     title: '信息',
@@ -63,7 +70,13 @@ export default {
                 }) */
             }
         },
-        handleExport(item) {},
+        async handleExport(item) {},
+        // 删除数据库
+        async handleDrop(item) {
+            await indexService.dropDb(item.name)
+            this.$toasted.show('删除成功')
+            this.$store.dispatch('refreshDb')
+        },
         showFileDialog() {
             const dialog = remote.dialog
             dialog.showOpenDialog(

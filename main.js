@@ -1,8 +1,7 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 
 //全局变量
 global.connectInfo = {}
-global.log = require('./src/log/logger')
 // 保持对window对象的全局引用，如果不这么做的话，当JavaScript对象被
 // 垃圾回收的时候，window对象将会自动的关闭
 let win
@@ -43,22 +42,4 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
     }
-})
-
-app.on('activate', () => {
-    // 在macOS上，当单击dock图标并且没有其他窗口打开时，
-    // 通常在应用程序中重新创建一个窗口。
-    if (win === null) {
-        createWindow()
-    }
-})
-
-// 在这个文件中，你可以续写应用剩下主进程代码。
-// 也可以拆分成几个文件，然后用 require 导入。
-
-// GPU进程崩溃
-app.on('gpu-process-crashed', function() {
-    log.error('GPU进程崩溃，程序退出')
-
-    app.exit(0)
 })

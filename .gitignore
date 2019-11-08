@@ -6,3 +6,4 @@ webdist
 /build/
 /sessions
 /webdist
+/*.log

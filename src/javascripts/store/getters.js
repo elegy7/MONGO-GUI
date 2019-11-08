@@ -1,6 +1,6 @@
 const getters = {
     dbs: state => state.app.dbs,
     connectStat: state => state.app.connectStat,
-    connectInfo: state => state.app.connectInfo
+    connectList: state => state.app.connectList
 }
 export default getters

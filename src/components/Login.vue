@@ -4,7 +4,7 @@
         <div class="form-warp">
             <h1>MongoDB</h1>
             <p>Just for backup and restore</p>
-            <div v-if="!connectInfo.length || isCreating">
+            <div v-if="!connectList.length || isCreating">
                 <div class="form-group">
                     <label>Address</label>
                     <input autocomplete="off"
@@ -41,6 +41,18 @@
                         <label class="custom-control-label"
                                for="customSwitch1">Mongo In Docker?</label>
                     </div>
+                </div>
+                <div class="form-group">
+                    <select class="form-control"
+                            v-model="info.dockerId"
+                            v-validate="'required'"
+                            name="docker">
+                        <option v-for="(dockerMongo, index) in dockerMongoList"
+                                :key="index"
+                                :value="dockerMongo.id">
+                            {{dockerMongo.names[0] + ' - ' + dockerMongo.id}}
+                        </option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <div :class="['custom-control custom-switch', {'checked': info.authEnable}]"
@@ -89,7 +101,7 @@
             </div>
             <div v-else>
                 <div :key="index"
-                     v-for="(info, index) in connectInfo">
+                     v-for="(info, index) in connectList">
                     <div class="el-row">
                         <div class="el-col">{{info.address}}</div>
                         <div class="el-col">{{info.database}} / {{info.uname}}</div>
@@ -115,9 +127,9 @@
 import IndexService from '../../src/service/index.service.ts'
 import { BASEURL } from '../javascripts/utils/consts.js'
 import { mapGetters } from 'vuex'
+import Docker from 'dockerode'
 
 const indexService = new IndexService()
-
 export default {
     data() {
         return {
@@ -129,24 +141,34 @@ export default {
                 authEnable: !!sessionStorage.getItem('authEnable'),
                 database: '',
                 uname: '',
-                password: ''
-            }
+                password: '',
+                dockerId: ''
+            },
+            // mongodb docker容器列表
+            dockerMongoList: []
         }
     },
     computed: {
-        ...mapGetters(['connectInfo', 'connectStat'])
+        ...mapGetters(['connectList', 'connectStat'])
     },
     methods: {
         async connect(data, isReConnect) {
             await this.$validator.validateAll()
             if (this.errors.items.length) return
+            if (!data.dockerId) {
+                this.$toasted.error('未指定Docker容器')
+                return
+            }
             const result = await indexService.connect(data)
-            console.log('result', result)
-
+            if (!result.ok) {
+                this.$toasted.error(result.err)
+                return
+            }
             this.info.connected = true
             this.$store.dispatch('setDbs', result.databases)
+            this.$store.dispatch('setConnectStat', data)
             if (isReConnect) return
-            this.$store.dispatch('setConnectInfo', this.info)
+            this.$store.dispatch('setConnectList', this.info)
         },
         toogleCheck(field) {
             if (field === 'dockerEnable') return
@@ -162,8 +184,25 @@ export default {
         },
         // 删除一条连接信息
         remove(index) {
-            this.$store.dispatch('removeConnectInfo', index)
+            this.$store.dispatch('removeFromConnectList', index)
         }
+    },
+    async mounted() {
+        const docker = new Docker()
+        const containers = await docker.listContainers()
+        this.dockerMongoList = containers
+            .filter(containerInfo => {
+                return containerInfo.Image === 'mongo'
+            })
+            .map(containerInfo => {
+                return {
+                    id: containerInfo.Id,
+                    names: containerInfo.Names.map(item =>
+                        item.replace(/\//g, '')
+                    )
+                }
+            })
+        this.info.dockerId = this.dockerMongoList[0].id
     }
 }
 </script>

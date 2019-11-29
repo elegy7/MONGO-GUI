@@ -160,7 +160,7 @@ export default {
                 return
             }
             const result = await indexService.connect(data)
-            if (!result.ok) {
+            if (!result || !result.ok) {
                 this.$toasted.error(result.err)
                 return
             }

@@ -59,16 +59,17 @@ export default {
         },
         async handleRestore(dirpath) {
             const result = await indexService.restoreInDocker(dirpath)
-            if (result) {
-            } else {
-                this.$toasted.show('导入成功')
-                this.$store.dispatch('refreshDb')
+            if (result && result.ok) {
+                this.$toasted.show('恢复成功')
                 /* remote.dialog.showMessageBox({
                     type: 'info',
                     title: '信息',
                     message: '导入成功'
                 }) */
+            } else {
+                this.$toasted.error('恢复时出现异常')
             }
+            this.$store.dispatch('refreshDb')
         },
         async handleExport(item) {},
         // 删除数据库

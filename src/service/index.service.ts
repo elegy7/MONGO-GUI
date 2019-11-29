@@ -64,7 +64,7 @@ export default class IndexService {
                         `docker exec ${dockerId} mongorestore --uri=${connectUrl} -d ${database} dump`,
                         (err, stdout) => {
                             if (err) reject(err)
-                            resolve()
+                            resolve({ ok: true })
                         }
                     )
                 })
@@ -74,19 +74,18 @@ export default class IndexService {
         })
     }
 
-    async dropDb(dbname): Promise<ExecException> {
+    async dropDb(dbname): Promise<any> {
         const { dockerId } = remote.getGlobal('connectInfo')
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             exec(
                 `docker exec ${dockerId} mongo ${dbname} --eval "printjson(db.dropDatabase())"`,
                 err => {
-                    if (err) {
-                        logger(err)
-                        return
-                    }
-                    resolve()
+                    if (err) reject(err)
+                    resolve({ ok: true })
                 }
             )
+        }).catch(err => {
+            logger(err)
         })
     }
 }

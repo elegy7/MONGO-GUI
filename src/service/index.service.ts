@@ -1,9 +1,8 @@
-import { exec, ExecException } from 'child_process'
+import { exec } from 'child_process'
 import { MongoClient } from 'mongodb'
 import { remote } from 'electron'
 import logger from '../log/logger.js'
-import * as isDev from 'electron-is-dev'
-
+const isDev = require('electron-is-dev')
 if (isDev) {
     console.log('Running in development')
 } else {
@@ -28,12 +27,11 @@ export default class IndexService {
         const client = await MongoClient.connect(connectUrl, {
             useNewUrlParser: true,
             useUnifiedTopology: false
-        }).catch(err => {
-            logger(err)
-        })
+        }).catch(err => logger(err))
         if (!client) return { err: '数据库连接失败' }
         const admin = client.db(database).admin()
-        const databases = await admin.listDatabases()
+        const databases = await admin.listDatabases().catch(err => logger(err))
+        if (!databases) return { err: '数据库连接失败' }
         // 查询用户要连接的库是否存在
         const result = databases.databases.find(item => item.name === database)
 
@@ -49,10 +47,37 @@ export default class IndexService {
         client.close()
         return databases
     }
-
+    async dumpInDocker(filepath: string): Promise<any> {
+        const { connectUrl, database, dockerId } = remote.getGlobal('connectInfo')
+        return new Promise((resolve, reject) => {
+            console.log('dockerId', dockerId)
+            if (!dockerId) reject(new Error('logout'))
+            // 删除临时dump目录
+            exec(`docker exec ${dockerId} rm -rf dump`, (err, stdout) => {
+                if (err) reject(err)
+                // 执行docker容器的dump操作
+                exec(
+                    `docker exec ${dockerId} mongodump --uri=${connectUrl} -o /dump`,
+                    (err, stdout) => {
+                        if (err) reject(err)
+                        // 将docker容器中的临时dump目录复制至目标目录
+                        exec(
+                            `docker cp ${dockerId}:dump/${database} ${filepath}`,
+                            (err, result) => {
+                                if (err) reject(err)
+                                resolve({ ok: true, result: result })
+                            }
+                        )
+                    }
+                )
+            })
+        }).catch(err => logger(err))
+    }
     async restoreInDocker(dirpath: string): Promise<any> {
         const { connectUrl, database, dockerId } = remote.getGlobal('connectInfo')
         return new Promise((resolve, reject) => {
+            console.log('dockerId', dockerId)
+            if (!dockerId) reject(new Error('logout'))
             // 删除临时dump目录
             exec(`docker exec ${dockerId} rm -rf dump`, (err, stdout) => {
                 if (err) reject(err)
@@ -61,7 +86,7 @@ export default class IndexService {
                     if (err) reject(err)
                     // 执行docker容器的restore操作
                     exec(
-                        `docker exec ${dockerId} mongorestore --uri=${connectUrl} -d ${database} dump`,
+                        `docker exec ${dockerId} mongorestore --uri=${connectUrl} -d ${database} /dump`,
                         (err, stdout) => {
                             if (err) reject(err)
                             resolve({ ok: true })
@@ -69,23 +94,37 @@ export default class IndexService {
                     )
                 })
             })
-        }).catch(err => {
-            logger(err)
-        })
+        }).catch(err => logger(err))
     }
 
     async dropDb(dbname): Promise<any> {
-        const { dockerId } = remote.getGlobal('connectInfo')
+        const { dockerId, connectUrl } = remote.getGlobal('connectInfo')
         return new Promise((resolve, reject) => {
-            exec(
-                `docker exec ${dockerId} mongo ${dbname} --eval "printjson(db.dropDatabase())"`,
-                err => {
-                    if (err) reject(err)
-                    resolve({ ok: true })
-                }
-            )
-        }).catch(err => {
-            logger(err)
-        })
+            console.log('dockerId', dockerId)
+            if (!dockerId) reject(new Error('logout'))
+            let shell
+            if (connectUrl.indexOf('@') > -1) {
+                const args = connectUrl.split('@')
+                const argsBefore = args[0].replace('mongodb://', '').split(':')
+                const argsAfter = args[1].split('/')[0].split(':')
+                const uname = argsBefore[0]
+                const pwd = argsBefore[1]
+                const host = argsAfter[0]
+                const port = argsAfter[1]
+                shell = `docker exec ${dockerId} mongo --host ${host}:${port} -u ${uname} -p ${pwd} ${dbname} --eval "printjson(db.dropDatabase())"`
+            } else {
+                const args = connectUrl
+                    .replace('mongodb://', '')
+                    .split('/')[0]
+                    .split(':')
+                const host = args[0]
+                const port = args[1]
+                shell = `docker exec ${dockerId} mongo --host ${host}:${port} ${dbname} --eval "printjson(db.dropDatabase())"`
+            }
+            exec(shell, err => {
+                if (err) reject(err)
+                resolve({ ok: true })
+            })
+        }).catch(err => logger(err))
     }
 }

@@ -11,7 +11,8 @@
     "build": {
         "win": {
             "target": [
-                "zip"
+                "zip",
+                "nsis"
             ]
         }
     },
@@ -21,7 +22,6 @@
         "@vue/component-compiler-utils": "^3.0.2",
         "electron": "^5.0.12",
         "electron-builder": "^22.1.0",
-        "electron-is-dev": "^1.1.0",
         "less": "^3.9.0",
         "parcel": "^1.12.3",
         "typescript": "^3.7.2",
@@ -33,6 +33,7 @@
         "babel-polyfill": "^6.26.0",
         "dockerode": "^2.5.8",
         "electron-logger": "^0.0.3",
+        "electron-is-dev": "^1.1.0",
         "mongodb": "^3.2.7",
         "mongoose": "^5.5.12",
         "store": "^2.0.12",

@@ -3,7 +3,7 @@
          v-show="!connectStat">
         <div class="form-warp">
             <h1>MongoDB</h1>
-            <p>Just for backup and restore</p>
+            <p>Just for dump and restore</p>
             <div v-if="!connectList.length || isCreating">
                 <div class="form-group">
                     <label>Address</label>
@@ -12,7 +12,7 @@
                            name="address"
                            type="text"
                            v-model="info.address"
-                           v-validate="'required'">
+                           v-validate="'required'" />
                 </div>
                 <div class="form-group">
                     <label>Port</label>
@@ -21,7 +21,7 @@
                            name="port"
                            type="text"
                            v-model="info.port"
-                           v-validate="'required'">
+                           v-validate="'required'" />
                 </div>
                 <div class="form-group">
                     <label>Database</label>
@@ -30,14 +30,14 @@
                            name="database"
                            type="text"
                            v-model="info.database"
-                           v-validate="'required'">
+                           v-validate="'required'" />
                 </div>
                 <div class="form-group">
-                    <div :class="['custom-control custom-switch', {'checked': info.dockerEnable}]"
+                    <div :class="['custom-control custom-switch', { checked: info.dockerEnable }]"
                          @click="toogleCheck('dockerEnable')">
                         <input :class="['custom-control-input']"
                                type="checkbox"
-                               v-model="info.dockerEnable">
+                               v-model="info.dockerEnable" />
                         <label class="custom-control-label"
                                for="customSwitch1">Mongo In Docker?</label>
                     </div>
@@ -50,16 +50,16 @@
                         <option v-for="(dockerMongo, index) in dockerMongoList"
                                 :key="index"
                                 :value="dockerMongo.id">
-                            {{dockerMongo.names[0] + ' - ' + dockerMongo.id}}
+                            {{ dockerMongo.names[0] + ' - ' + dockerMongo.id }}
                         </option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <div :class="['custom-control custom-switch', {'checked': info.authEnable}]"
+                    <div :class="['custom-control custom-switch', { checked: info.authEnable }]"
                          @click="toogleCheck('authEnable')">
                         <input :class="['custom-control-input']"
                                type="checkbox"
-                               v-model="info.authEnable">
+                               v-model="info.authEnable" />
                         <label class="custom-control-label"
                                for="customSwitch1">Perform Authentication</label>
                     </div>
@@ -72,7 +72,7 @@
                                name="uname"
                                type="text"
                                v-model="info.uname"
-                               v-validate="'required'">
+                               v-validate="'required'" />
                     </div>
                     <div class="form-group">
                         <label>Password</label>
@@ -81,13 +81,13 @@
                                name="password"
                                type="password"
                                v-model="info.password"
-                               v-validate="'required'">
+                               v-validate="'required'" />
                     </div>
                 </div>
                 <div class="error-box">
                     <p :key="item.id"
                        v-for="item in errors.items">
-                        <span>{{item.msg}}</span>
+                        <span>{{ item.msg }}</span>
                     </p>
                 </div>
                 <div class="form-group"
@@ -96,21 +96,28 @@
                        class="btn fl"
                        href="javascript:;">Back</a>
                     <button @click="connect(info)"
-                            class="btn btn-outline-success fr">Connect</button>
+                            class="btn btn-outline-success fr">
+                        Connect
+                    </button>
                 </div>
             </div>
             <div v-else>
                 <div :key="index"
                      v-for="(info, index) in connectList">
                     <div class="el-row">
-                        <div class="el-col">{{info.address}}</div>
-                        <div class="el-col">{{info.database}} / {{info.uname}}</div>
+                        <div class="el-col">{{ info.address }}</div>
+                        <div class="el-col">{{ info.database }} / {{ info.uname }}</div>
+                        <div class="el-col">{{ info.dockerName }} : {{info.dockerId.substr(0, 6)}}</div>
                         <div class="el-col">
                             <button @click="connect(info, true)"
-                                    class="btn btn-sm btn-outline-info">ReConnect</button>
+                                    class="btn btn-sm btn-outline-info">
+                                ReConnect
+                            </button>
                             <button @click="remove(index)"
                                     class="btn btn-sm btn-outline-danger"
-                                    style="margin-left: 20px;">Remove</button>
+                                    style="margin-left: 20px;">
+                                Remove
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -142,7 +149,8 @@ export default {
                 database: '',
                 uname: '',
                 password: '',
-                dockerId: ''
+                dockerId: '',
+                dockerName: ''
             },
             // mongodb docker容器列表
             dockerMongoList: []
@@ -155,8 +163,15 @@ export default {
         async connect(data, isReConnect) {
             await this.$validator.validateAll()
             if (this.errors.items.length) return
-            if (!data.dockerId) {
+            if (this.info.dockerEnable && !data.dockerId) {
                 this.$toasted.error('未指定Docker容器')
+                return
+            }
+            if (
+                this.info.dockerEnable &&
+                !this.dockerMongoList.find(item => item.id === data.dockerId)
+            ) {
+                this.$toasted.error('未找到Docker容器')
                 return
             }
             const result = await indexService.connect(data)
@@ -165,6 +180,9 @@ export default {
                 return
             }
             this.info.connected = true
+            this.info.dockerName = this.dockerMongoList.find(
+                item => item.id === this.info.dockerId
+            ).names[0]
             this.$store.dispatch('setDbs', result.databases)
             this.$store.dispatch('setConnectStat', data)
             if (isReConnect) return
@@ -254,10 +272,20 @@ export default {
         padding-left: 0;
         .el-col {
             display: inline-flex;
-            width: 33%;
+            width: 30%;
             // padding-left: 30px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: normal;
             &:last-child {
                 justify-content: flex-end;
+                width: 30%;
+            }
+            &:nth-child(1) {
+                width: 15%;
+            }
+            &:nth-child(2) {
+                width: 20%;
             }
         }
         .btn-sm {

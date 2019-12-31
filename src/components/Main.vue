@@ -17,7 +17,7 @@
                                directory>
                     </div> -->
                 </div>
-                <div @click="handleExport(item)"
+                <div @click="showDumpDialog(item)"
                      class="btn btn-sm btn-success"
                      v-if="item.sizeOnDisk > 0">
                     <span>Dump</span>
@@ -52,32 +52,29 @@ export default {
         ...mapGetters(['dbs'])
     },
     methods: {
+        // 断开数据库链接
         async disconnect() {
             indexService.disConnect()
             this.$store.dispatch('setDbs', [])
             this.$store.dispatch('setConnectStat', null)
         },
-        async handleRestore(dirpath) {
-            const result = await indexService.restoreInDocker(dirpath)
-            if (result && result.ok) {
-                this.$toasted.show('恢复成功')
-                /* remote.dialog.showMessageBox({
-                    type: 'info',
-                    title: '信息',
-                    message: '导入成功'
-                }) */
-            } else {
-                this.$toasted.error('恢复时出现异常')
-            }
-            this.$store.dispatch('refreshDb')
+        // 打开备份数据库窗口
+        showDumpDialog(db) {
+            const dialog = remote.dialog
+            dialog.showSaveDialog(
+                {
+                    title: '数据备份',
+                    buttonLabel: '保存',
+                    defaultPath: `${db.name}`
+                },
+                filepath => {
+                    if (filepath) {
+                        this.handleDump(filepath)
+                    }
+                }
+            )
         },
-        async handleExport(item) {},
-        // 删除数据库
-        async handleDrop(item) {
-            await indexService.dropDb(item.name)
-            this.$toasted.show('删除成功')
-            this.$store.dispatch('refreshDb')
-        },
+        // 打开恢复数据库窗口
         showFileDialog() {
             const dialog = remote.dialog
             dialog.showOpenDialog(
@@ -89,6 +86,38 @@ export default {
                     }
                 }
             )
+        },
+        // 备份数据库
+        async handleDump(filepath) {
+            const result = await indexService.dumpInDocker(filepath)
+            if (result && result.ok) {
+                this.$toasted.show('保存成功')
+            } else {
+                this.$toasted.error('备份时出现异常')
+                this.disconnect()
+            }
+        },
+        // 恢复数据库
+        async handleRestore(dirpath) {
+            const result = await indexService.restoreInDocker(dirpath)
+            if (result && result.ok) {
+                this.$toasted.show('恢复成功')
+            } else {
+                this.$toasted.error('恢复时出现异常')
+                this.disconnect()
+            }
+            this.$store.dispatch('refreshDb')
+        },
+        // 删除数据库
+        async handleDrop(db) {
+            const result = await indexService.dropDb(db.name)
+            if (result && result.ok) {
+                this.$toasted.show('删除成功')
+            } else {
+                this.$toasted.error('删除时出现异常')
+                this.disconnect()
+            }
+            this.$store.dispatch('refreshDb')
         }
     }
 }

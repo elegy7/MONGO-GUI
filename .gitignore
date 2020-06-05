@@ -1,0 +1,8 @@
+node_modules
+yarn.lock
+webdist
+.cache
+/build/
+/sessions
+/webdist
+/*.log

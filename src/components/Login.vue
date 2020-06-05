@@ -42,7 +42,8 @@
                                for="customSwitch1">Mongo In Docker?</label>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group"
+                     v-if="info.dockerEnable">
                     <select class="form-control"
                             v-model="info.dockerId"
                             v-validate="'required'"
@@ -105,9 +106,9 @@
                 <div :key="index"
                      v-for="(info, index) in connectList">
                     <div class="el-row">
-                        <div class="el-col">{{ info.address }}</div>
+                        <div class="el-col">{{ info.address }} : {{ info.port }}</div>
                         <div class="el-col">{{ info.database }} / {{ info.uname }}</div>
-                        <div class="el-col">{{ info.dockerName }} : {{info.dockerId.substr(0, 6)}}</div>
+                        <div class="el-col">{{ info.dockerName }} {{info.dockerEnable ? ':' : ''}} {{info.dockerId.substr(0, 6)}}</div>
                         <div class="el-col">
                             <button @click="connect(info, true)"
                                     class="btn btn-sm btn-outline-info">
@@ -127,6 +128,16 @@
                 </div>
             </div>
         </div>
+        <div class="mask"
+             v-show="isLoading">
+            <div class="loading">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -141,10 +152,11 @@ export default {
     data() {
         return {
             isCreating: false,
+            isLoading: false,
             info: {
                 address: 'localhost',
                 port: '27017',
-                dockerEnable: !!sessionStorage.getItem('dockerEnable') || true,
+                dockerEnable: !!sessionStorage.getItem('dockerEnable'),
                 authEnable: !!sessionStorage.getItem('authEnable'),
                 database: '',
                 uname: '',
@@ -174,22 +186,29 @@ export default {
                 this.$toasted.error('未找到Docker容器')
                 return
             }
+            this.isLoading = true
             const result = await indexService.connect(data)
+            this.isLoading = false
             if (!result || !result.ok) {
                 this.$toasted.error(result.err)
                 return
             }
             this.info.connected = true
-            this.info.dockerName = this.dockerMongoList.find(
-                item => item.id === this.info.dockerId
-            ).names[0]
+            if (this.info.dockerEnable) {
+                this.info.dockerName = this.dockerMongoList.find(
+                    item => item.id === this.info.dockerId
+                ).names[0]
+            } else {
+                this.info.dockerName = ''
+                this.info.dockerId = ''
+            }
             this.$store.dispatch('setDbs', result.databases)
             this.$store.dispatch('setConnectStat', data)
             if (isReConnect) return
             this.$store.dispatch('setConnectList', this.info)
         },
         toogleCheck(field) {
-            if (field === 'dockerEnable') return
+            // if (field === 'dockerEnable') return
             this.info[field] = !this.info[field]
             sessionStorage.setItem(
                 'authEnable',
@@ -229,7 +248,7 @@ export default {
 @green: #02b875;
 .login-warp {
     .form-warp {
-        width: 600px;
+        width: 750px;
         margin: 0 auto;
     }
     .custom-switch {
@@ -279,10 +298,10 @@ export default {
             white-space: normal;
             &:last-child {
                 justify-content: flex-end;
-                width: 30%;
+                width: 25%;
             }
             &:nth-child(1) {
-                width: 15%;
+                width: 20%;
             }
             &:nth-child(2) {
                 width: 20%;

@@ -34,6 +34,16 @@
             <button @click="disconnect"
                     class="btn btn-outline-danger">Disconnect</button>
         </div>
+        <div class="mask"
+             v-show="isLoading">
+            <div class="loading">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -46,7 +56,9 @@ const indexService = new IndexService()
 
 export default {
     data() {
-        return {}
+        return {
+            isLoading: false
+        }
     },
     computed: {
         ...mapGetters(['dbs'])
@@ -89,7 +101,9 @@ export default {
         },
         // 备份数据库
         async handleDump(filepath) {
+            this.isLoading = true
             const result = await indexService.dumpInDocker(filepath)
+            this.isLoading = false
             if (result && result.ok) {
                 this.$toasted.show('保存成功')
             } else {
@@ -99,18 +113,22 @@ export default {
         },
         // 恢复数据库
         async handleRestore(dirpath) {
+            this.isLoading = true
             const result = await indexService.restoreInDocker(dirpath)
+            this.isLoading = false
             if (result && result.ok) {
                 this.$toasted.show('恢复成功')
+                this.$store.dispatch('refreshDb')
             } else {
                 this.$toasted.error('恢复时出现异常')
                 this.disconnect()
             }
-            this.$store.dispatch('refreshDb')
         },
         // 删除数据库
         async handleDrop(db) {
+            this.isLoading = true
             const result = await indexService.dropDb(db.name)
+            this.isLoading = false
             if (result && result.ok) {
                 this.$toasted.show('删除成功')
             } else {
